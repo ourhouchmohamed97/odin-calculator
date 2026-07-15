@@ -1,183 +1,269 @@
 const display = document.querySelector("#display");
+const buttons = document.querySelectorAll("button");
 
-const numberButtons = document.querySelectorAll(".number");
-const operatorButtons = document.querySelectorAll(".operator");
-const decimalButton = document.querySelector(".decimal");
-const equalsButton = document.querySelector(".equals");
-const clearButton = document.querySelector(".clear");
-
-let currentNumber = "0";
-let firstNumber = null;
+let currentValue = "0";
+let previousValue = null;
 let operator = null;
-let waitingForSecondNumber = false;
+let waitingForOperand = false;
+let lastOperator = null;
+let lastOperand = null;
+
+updateDisplay();
+
+// --------------------
+// Core Math
+// --------------------
+
+function add(a, b) { return a + b; }
+function subtract(a, b) { return a - b; }
+function multiply(a, b) { return a * b; }
+function divide(a, b) { return b === 0 ? "Error" : a / b; }
+
+function calculate(a, op, b) {
+    let result;
+    switch (op) {
+        case "+": result = add(a, b); break;
+        case "-": result = subtract(a, b); break;
+        case "*": result = multiply(a, b); break;
+        case "/": result = divide(a, b); break;
+        default: result = b;
+    }
+    if (result !== "Error") {
+        result = parseFloat(result.toFixed(8));
+    }
+    return result;
+}
+
+// --------------------
+// Display
+// --------------------
+
+function formatNumber(value) {
+    if (value === "Error") return value;
+    const isNegative = value.startsWith("-");
+    const numericValue = isNegative ? value.slice(1) : value;
+    const [integer, decimal] = numericValue.split(".");
+    const formattedInteger = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    let result = (isNegative ? "−" : "") + formattedInteger;
+    if (decimal !== undefined) result += "." + decimal;
+    return result;
+}
 
 function updateDisplay() {
-    display.textContent = currentNumber;
+    display.textContent = formatNumber(currentValue);
+
+    const len = currentValue.length;
+    if (len > 14) display.style.fontSize = "1.4rem";
+    else if (len > 11) display.style.fontSize = "1.8rem";
+    else if (len > 8) display.style.fontSize = "2.2rem";
+    else display.style.fontSize = "3rem";
+
+    updateClearButton();
+    updateActiveOperator();
 }
 
-// Math Functions
-
-function add(a, b) {
-    return a + b;
+function updateClearButton() {
+    const clearBtn = document.querySelector('[data-action="clear"]');
+    const shouldBeC = currentValue !== "0" && !waitingForOperand && currentValue !== "Error";
+    clearBtn.textContent = shouldBeC ? "C" : "AC";
 }
 
-function subtract(a, b) {
-    return a - b;
-}
-
-function multiply(a, b) {
-    return a * b;
-}
-
-function divide(a, b) {
-    if (b === 0)
-        return "Nice try 😎";
-
-    return a / b;
-}
-
-function operate(operator, firstNumber, secondNumber) {
-    switch (operator) {
-        case "+":
-            return add(firstNumber, secondNumber);
-
-        case "-":
-            return subtract(firstNumber, secondNumber);
-
-        case "*":
-            return multiply(firstNumber, secondNumber);
-
-        case "/":
-            return divide(firstNumber, secondNumber);
-
-        default:
-            return null;
-    }
-}
-
-// Number Buttons
-
-numberButtons.forEach(button => {
-
-    button.addEventListener("click", () => {
-
-        if (waitingForSecondNumber) {
-            currentNumber = button.textContent;
-            waitingForSecondNumber = false;
-        }
-        else if (currentNumber === "0") {
-            currentNumber = button.textContent;
-        }
-        else {
-            currentNumber += button.textContent;
-        }
-
-        updateDisplay();
-
+function updateActiveOperator() {
+    document.querySelectorAll(".operator").forEach(btn => {
+        const btnOp = btn.textContent
+            .replace("×", "*")
+            .replace("÷", "/")
+            .replace("−", "-");
+        btn.classList.toggle("active-operator", btnOp === operator);
     });
+}
 
-});
-
-// Decimal Button
-
-decimalButton.addEventListener("click", () => {
-
-    if (waitingForSecondNumber) {
-        currentNumber = "0";
-        waitingForSecondNumber = false;
+function resetIfError() {
+    if (currentValue === "Error") {
+        currentValue = "0";
+        previousValue = null;
+        operator = null;
+        waitingForOperand = false;
+        lastOperator = null;
+        lastOperand = null;
     }
+}
 
-    if (!currentNumber.includes(".")) {
-        currentNumber += ".";
+// --------------------
+// Input Handlers
+// --------------------
+
+function handleNumber(digit) {
+    resetIfError();
+    if (waitingForOperand) {
+        currentValue = digit;
+        waitingForOperand = false;
+    } else if (currentValue === "0") {
+        currentValue = digit;
+    } else {
+        currentValue += digit;
+    }
+    updateDisplay();
+}
+
+function handleDecimal() {
+    resetIfError();
+    if (waitingForOperand) {
+        currentValue = "0.";
+        waitingForOperand = false;
+    } else if (!currentValue.includes(".")) {
+        currentValue += ".";
+    }
+    updateDisplay();
+}
+
+function handleOperator(nextOperator) {
+    resetIfError();
+
+    if (waitingForOperand && operator !== null) {
+        operator = nextOperator;
         updateDisplay();
-    }
-
-});
-
-// Operator Buttons
-
-operatorButtons.forEach(button => {
-
-    button.addEventListener("click", () => {
-
-        if (operator !== null && waitingForSecondNumber) {
-            switch (button.textContent) {
-                case "+":
-                    operator = "+";
-                    break;
-                case "−":
-                    operator = "-";
-                    break;
-                case "×":
-                    operator = "*";
-                    break;
-                case "÷":
-                    operator = "/";
-                    break;
-            }
-            return;
-        }
-
-        firstNumber = Number(currentNumber);
-
-        switch (button.textContent) {
-            case "+":
-                operator = "+";
-                break;
-
-            case "−":
-                operator = "-";
-                break;
-
-            case "×":
-                operator = "*";
-                break;
-
-            case "÷":
-                operator = "/";
-                break;
-        }
-
-        waitingForSecondNumber = true;
-
-    });
-
-});
-
-// Equals Button
-
-equalsButton.addEventListener("click", () => {
-
-    if (operator === null || waitingForSecondNumber)
         return;
-
-    const secondNumber = Number(currentNumber);
-
-    let result = operate(operator, firstNumber, secondNumber);
-
-    if (typeof result === "number") {
-        result = Number(result.toFixed(8));
     }
 
-    currentNumber = String(result);
+    if (operator !== null && previousValue !== null) {
+        const result = calculate(previousValue, operator, Number(currentValue));
+        currentValue = String(result);
+        previousValue = result === "Error" ? null : result;
+    } else {
+        previousValue = Number(currentValue);
+    }
+
+    if (currentValue !== "Error") {
+        operator = nextOperator;
+        waitingForOperand = true;
+    } else {
+        operator = null;
+        waitingForOperand = false;
+        previousValue = null;
+    }
 
     updateDisplay();
+}
 
-    firstNumber = null;
-    operator = null;
-    waitingForSecondNumber = false;
+function handleEquals() {
+    if (operator === null && lastOperator === null) return;
 
+    let result;
+
+    if (operator !== null) {
+        const operand = waitingForOperand ? previousValue : Number(currentValue);
+        result = calculate(previousValue, operator, operand);
+        lastOperator = operator;
+        lastOperand = operand;
+        previousValue = null;
+        operator = null;
+    } else {
+        result = calculate(Number(currentValue), lastOperator, lastOperand);
+    }
+
+    currentValue = String(result);
+    waitingForOperand = true;
+    updateDisplay();
+}
+
+function handleClear() {
+    const shouldClearAll = currentValue === "0" || waitingForOperand || currentValue === "Error";
+
+    if (shouldClearAll) {
+        currentValue = "0";
+        previousValue = null;
+        operator = null;
+        waitingForOperand = false;
+        lastOperator = null;
+        lastOperand = null;
+    } else {
+        currentValue = "0";
+    }
+    updateDisplay();
+}
+
+function handleSign() {
+    resetIfError();
+    if (currentValue === "0") return;
+    if (currentValue.startsWith("-")) {
+        currentValue = currentValue.slice(1);
+    } else {
+        currentValue = "-" + currentValue;
+    }
+    updateDisplay();
+}
+
+function handlePercent() {
+    resetIfError();
+    currentValue = String(Number(currentValue) / 100);
+    updateDisplay();
+}
+
+function handleBackspace() {
+    if (waitingForOperand || currentValue === "Error") return;
+    if (currentValue.length === 1 || (currentValue.length === 2 && currentValue.startsWith("-"))) {
+        currentValue = "0";
+    } else {
+        currentValue = currentValue.slice(0, -1);
+    }
+    updateDisplay();
+}
+
+// --------------------
+// Event Listeners
+// --------------------
+
+buttons.forEach(button => {
+    button.addEventListener("click", () => {
+        button.classList.add("active");
+        setTimeout(() => button.classList.remove("active"), 100);
+
+        if (button.classList.contains("number")) {
+            handleNumber(button.textContent);
+        } else if (button.classList.contains("operator")) {
+            const op = button.textContent
+                .replace("×", "*")
+                .replace("÷", "/")
+                .replace("−", "-");
+            handleOperator(op);
+        } else if (button.classList.contains("decimal")) {
+            handleDecimal();
+        } else if (button.classList.contains("equals")) {
+            handleEquals();
+        } else if (button.classList.contains("function")) {
+            const action = button.dataset.action;
+            if (action === "clear") handleClear();
+            else if (action === "sign") handleSign();
+            else if (action === "percent") handlePercent();
+        }
+    });
 });
 
-// Clear Button
+document.addEventListener("keydown", (e) => {
+    if (e.repeat) return;
 
-clearButton.addEventListener("click", () => {
+    if (e.key === "Backspace") {
+        handleBackspace();
+        return;
+    }
 
-    currentNumber = "0";
-    firstNumber = null;
-    operator = null;
-    waitingForSecondNumber = false;
+    if (e.key === "Enter" || e.key === "=") e.preventDefault();
 
-    updateDisplay();
+    const keyMap = {
+        "0": "0", "1": "1", "2": "2", "3": "3", "4": "4",
+        "5": "5", "6": "6", "7": "7", "8": "8", "9": "9",
+        ".": ".", "+": "+", "-": "−", "*": "×", "/": "÷",
+        "Enter": "=", "=": "=", "Escape": "AC"
+    };
 
+    const buttonText = keyMap[e.key];
+    if (!buttonText) return;
+
+    const btn = Array.from(document.querySelectorAll("button")).find(b => b.textContent === buttonText);
+    if (btn) {
+        btn.classList.add("active");
+        setTimeout(() => btn.classList.remove("active"), 100);
+        btn.click();
+    }
 });
