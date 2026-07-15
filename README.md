@@ -74,4 +74,3 @@ calculator/
 ## Acknowledgements
 
 This project was completed as part of **The Odin Project** Foundations curriculum.
-```
