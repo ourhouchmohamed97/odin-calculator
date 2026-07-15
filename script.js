@@ -5,6 +5,11 @@ const decimalButton = document.querySelector(".decimal");
 const clearButton = document.querySelector(".clear");
 
 let currentNumber = "0";
+let firstNumber = null;
+let operator = null;
+let waitingForSecondNumber = false;
+
+const operatorButtons = document.querySelectorAll(".operator");
 
 function updateDisplay() {
     display.textContent = currentNumber;
@@ -13,15 +18,55 @@ function updateDisplay() {
 numberButtons.forEach(button => {
     button.addEventListener("click", () => {
 
-        if (currentNumber === "0") {
+        if (waitingForSecondNumber) {
             currentNumber = button.textContent;
-        } else {
+            waitingForSecondNumber = false;
+        }
+        else if (currentNumber === "0") {
+            currentNumber = button.textContent;
+        }
+        else {
             currentNumber += button.textContent;
         }
 
         updateDisplay();
 
     });
+});
+
+operatorButtons.forEach(button => {
+
+    button.addEventListener("click", () => {
+
+        if (operator !== null && waitingForSecondNumber) {
+            operator = button.textContent;
+            return;
+        }
+
+        firstNumber = Number(currentNumber);
+
+        switch (button.textContent) {
+            case "+":
+                operator = "+";
+                break;
+
+            case "−":
+                operator = "-";
+                break;
+
+            case "×":
+                operator = "*";
+                break;
+
+            case "÷":
+                operator = "/";
+                break;
+        }
+
+        waitingForSecondNumber = true;
+
+    });
+
 });
 
 decimalButton.addEventListener("click", () => {
