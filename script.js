@@ -1,44 +1,41 @@
 const display = document.querySelector("#display");
 
-function add(a, b) {
-    return a + b;
+const numberButtons = document.querySelectorAll(".number");
+const decimalButton = document.querySelector(".decimal");
+const clearButton = document.querySelector(".clear");
+
+let currentNumber = "0";
+
+function updateDisplay() {
+    display.textContent = currentNumber;
 }
 
-function subtract(a, b) {
-    return a - b;
-}
+numberButtons.forEach(button => {
+    button.addEventListener("click", () => {
 
-function multiply(a, b) {
-    return a * b;
-}
+        if (currentNumber === "0") {
+            currentNumber = button.textContent;
+        } else {
+            currentNumber += button.textContent;
+        }
 
-function divide(a, b) {
+        updateDisplay();
 
-    if (b === 0)
-        return "Nice try 😎";
+    });
+});
 
-    return a / b;
-}
+decimalButton.addEventListener("click", () => {
 
-function operate(operator, firstNumber, secondNumber) {
-
-    switch (operator) {
-
-        case "+":
-            return add(firstNumber, secondNumber);
-
-        case "-":
-            return subtract(firstNumber, secondNumber);
-
-        case "*":
-            return multiply(firstNumber, secondNumber);
-
-        case "/":
-            return divide(firstNumber, secondNumber);
-
-        default:
-            return null;
-
+    if (!currentNumber.includes(".")) {
+        currentNumber += ".";
+        updateDisplay();
     }
 
-}
+});
+
+clearButton.addEventListener("click", () => {
+
+    currentNumber = "0";
+    updateDisplay();
+
+});
