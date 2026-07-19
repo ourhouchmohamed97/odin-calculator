@@ -25,20 +25,6 @@ This project recreates a standard calculator that performs the four basic arithm
 - CSS3 (Flexbox)
 - Vanilla JavaScript (ES6)
 
-## Getting Started
-
-1. Clone the repository:
-
-```bash
-git clone https://github.com/your-username/calculator.git
-```
-
-2. Open the project folder.
-
-3. Open `index.html` in your preferred web browser.
-
-4. Use the calculator by clicking the buttons.
-
 ## Project Structure
 
 ```
